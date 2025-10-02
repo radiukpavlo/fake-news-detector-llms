@@ -24,7 +24,13 @@ public class MLController : ControllerBase
     {
         var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/json";
         var payload = await response.Content.ReadAsStringAsync();
-        return Content(payload, contentType, response.StatusCode);
+
+        return new ContentResult
+        {
+            Content = payload,
+            ContentType = contentType,
+            StatusCode = (int)response.StatusCode,
+        };
     }
 
     [HttpGet("health")]

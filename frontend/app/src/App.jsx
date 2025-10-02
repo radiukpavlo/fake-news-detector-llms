@@ -1,14 +1,12 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import Explain from "./components/Explain";
+import Projection from "./components/Projection";
 import "./App.css";
 
 const API_BASE = process.env.REACT_APP_API_URL ?? "http://localhost:5000";
 const DEFAULT_MODELS = ["roberta-base", "roberta-large"];
 
-const toDisplayMetric = (value) =>
-  typeof value === "number" ? value.toFixed(3) : "-";
-
-import Explain from "./components/Explain";
-import Projection from "./components/Projection";
+const toDisplayMetric = (value) => (typeof value === "number" ? value.toFixed(3) : "-");
 
 export default function App() {
   const [availableModels, setAvailableModels] = useState(DEFAULT_MODELS);
@@ -70,30 +68,23 @@ export default function App() {
 
   useEffect(() => {
     fetchAvailableModels();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (!isPolling) {
-      return undefined;
-    }
+    if (!isPolling) return undefined;
 
     let timerId;
-
     const poll = async () => {
       try {
         const status = await callApi(`/train/status/${selectedModel}`);
         setTrainingStatus(status);
-
         if (status.state === "in_progress") {
           timerId = setTimeout(poll, 2000);
         } else {
           setIsPolling(false);
           if (status.state === "completed" && status.summary?.evaluation) {
-            setMetrics({
-              model_name: selectedModel,
-              report: {},
-              summary: status.summary,
-            });
+            setMetrics({ model_name: selectedModel, report: {}, summary: status.summary });
             fetchAvailableModels();
           }
         }
@@ -105,20 +96,17 @@ export default function App() {
 
     poll();
     return () => clearTimeout(timerId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPolling, selectedModel]);
 
   const startTraining = async () => {
     setErrorMessage(null);
     setTrainingStatus({ state: "starting" });
     setMetrics(null);
-
     try {
       await callApi("/train", {
         method: "POST",
-        body: JSON.stringify({
-          modelName: selectedModel,
-          downloadDataset,
-        }),
+        body: JSON.stringify({ modelName: selectedModel, downloadDataset }),
       });
       setIsPolling(true);
     } catch (error) {
@@ -151,19 +139,14 @@ export default function App() {
   const runPrediction = async () => {
     setErrorMessage(null);
     setPredictionResult(null);
-
     if (!predictionText.trim()) {
       setErrorMessage("Please provide text to analyse.");
       return;
     }
-
     try {
       const result = await callApi("/predict", {
         method: "POST",
-        body: JSON.stringify({
-          modelName: selectedModel,
-          text: predictionText,
-        }),
+        body: JSON.stringify({ modelName: selectedModel, text: predictionText }),
       });
       setPredictionResult(result);
     } catch (error) {
@@ -172,9 +155,7 @@ export default function App() {
   };
 
   const aggregateMetrics = useMemo(() => {
-    if (!metrics?.summary?.evaluation) {
-      return null;
-    }
+    if (!metrics?.summary?.evaluation) return null;
     return metrics.summary.evaluation;
   }, [metrics]);
 
@@ -189,11 +170,7 @@ export default function App() {
         <h2>Model Configuration</h2>
         <div className="field">
           <label htmlFor="model-select">Model</label>
-          <select
-            id="model-select"
-            value={selectedModel}
-            onChange={(event) => setSelectedModel(event.target.value)}
-          >
+          <select id="model-select" value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)}>
             {availableModels.map((model) => (
               <option key={model} value={model}>
                 {model}
@@ -207,7 +184,7 @@ export default function App() {
             id="download"
             type="checkbox"
             checked={downloadDataset}
-            onChange={(event) => setDownloadDataset(event.target.checked)}
+            onChange={(e) => setDownloadDataset(e.target.checked)}
           />
           <label htmlFor="download">Download dataset from Kaggle before training</label>
         </div>
@@ -226,7 +203,7 @@ export default function App() {
           </div>
         )}
 
-        {isPolling && <p className="info">Training in progress… polling status.</p>}
+        {isPolling && <p className="info">Training in progress. polling status.</p>}
       </section>
 
       <section className="card">
@@ -263,7 +240,7 @@ export default function App() {
         <h2>Predict</h2>
         <textarea
           value={predictionText}
-          onChange={(event) => setPredictionText(event.target.value)}
+          onChange={(e) => setPredictionText(e.target.value)}
           placeholder="Enter a news headline or snippet"
         />
         <div className="actions">
@@ -281,14 +258,13 @@ export default function App() {
         )}
       </section>
 
-      {errorMessage && (
-        <div className="error">Error: {errorMessage}</div>
-      
-  <div style={{marginTop:24}}>
-    <Explain apiBase={API_BASE} selectedModel={selectedModel} />
-    <Projection apiBase={API_BASE} />
-  </div>
-)}
+      {errorMessage && <div className="error">Error: {errorMessage}</div>}
+
+      <div style={{ marginTop: 24 }}>
+        <Explain apiBase={API_BASE} selectedModel={selectedModel} />
+        <Projection apiBase={API_BASE} />
+      </div>
     </div>
   );
 }
+
